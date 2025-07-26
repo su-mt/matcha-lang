@@ -71,3 +71,9 @@ newMonth run (int indexing) {
 }
 
 
+
+
+field Timestamp {
+    int created_at;
+    int updated_at;
+}

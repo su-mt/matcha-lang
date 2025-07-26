@@ -56,7 +56,10 @@ typedef enum NodeType {
     NODE_SYSTEM_DECL,
     NODE_INCLUDE,
     NODE_QUERY,
+    NODE_QUERY_LIST,     // для списка запросов
     NODE_RUN,
+    NODE_RUN_LIST,       // для списка run-функций
+    NODE_EXTERNAL_RUN_IMPL,
     NODE_EXTERNAL_RUN,
     
     // Управляющие конструкции
@@ -91,6 +94,7 @@ typedef struct ASTNodeInfo {
     int col_num;          // номер колонки в исходном коде
 } ASTNodeInfo;
 
+
 typedef struct ASTNode {
     NodeType type;
     struct ASTNode* left;
@@ -111,6 +115,13 @@ typedef struct ASTNode {
     // Для списков - указатель на следующий элемент
     struct ASTNode* next;
 } ASTNode;
+
+typedef struct RunBinding {
+    char* system_name;           // имя системы
+    ASTNode** run_block_ptr;     // указатель на поле right в RUN узле
+    ASTNode* params;             // параметры для проверки совпадения
+    struct RunBinding* next;     // следующая связь в списке
+} RunBinding;
 
 // Функции создания узлов
 ASTNode* createNode(NodeType type);
@@ -133,11 +144,15 @@ ASTNode* prependToList(ASTNode* list, ASTNode* item);
 // Функции для создания сложных узлов
 ASTNode* makeFieldDeclNode(const char* name, ASTNode* var_list);
 ASTNode* makeObjectDeclNode(const char* name, ASTNode* base, ASTNode* components);
-ASTNode* makeSystemDeclNode(const char* name, ASTNode* queries, ASTNode* runs);
 ASTNode* makeVarDeclNode(ASTNode* type, const char* name, ASTNode* init_value);
+ASTNode* makeSystemDeclNode(const char* name, ASTNode* queries, ASTNode* runs);
 ASTNode* makeQueryDeclNode(const char* alias, const char* type_name);
 ASTNode* makeRunDeclNode(ASTNode* params, ASTNode* body);
-ASTNode* makeForNode(ASTNode* init, ASTNode* condition, ASTNode* update, ASTNode* body);
+ASTNode* makeExternalRunImplNode(const char* system_name, ASTNode* params, ASTNode* body);
+void addRunBinding(const char* system_name, ASTNode** run_block_ptr, ASTNode* params);
+ASTNode* linkExternalRunToSystem(const char* system_name, ASTNode* params, ASTNode* block);
+void registerRunPrototype(const char* system_name, ASTNode* run_node);ASTNode* makeForNode(ASTNode* init, ASTNode* condition, ASTNode* update, ASTNode* body);
+void cleanupRunBindings();
 ASTNode* makeForEachNode(ASTNode* type, const char* var_name, ASTNode* iterable, ASTNode* body);
 ASTNode* makeIfNode(ASTNode* condition, ASTNode* then_stmt, ASTNode* else_stmt);
 ASTNode* makeWhileNode(ASTNode* condition, ASTNode* body);
@@ -150,6 +165,9 @@ size_t sizeofnode(NodeType type);
 // Утилиты
 void setNodeInfo(ASTNode* node, const char* name, int line, int col);
 const char* getNodeTypeName(NodeType type);
+ASTNode* findSystemByName(ASTNode* declarations, const char* system_name);
+ASTNode* findEmptyRunInSystem(ASTNode* system_decl, ASTNode* params);
+
 
 #ifdef __cplusplus
 }

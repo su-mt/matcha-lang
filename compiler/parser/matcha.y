@@ -65,15 +65,18 @@ Program:
 ;
 
 Declarations:
-      /* empty */ { $$ = NULL; }
-    | Declarations Declaration { 
-        if ($1 == NULL) {
+    /* empty */ { $$ = NULL; }
+    | Declarations Declaration {
+        if ($2 == NULL) {
+            // Declaration вернул NULL (например, успешно обработанный external run)
+            $$ = $1;
+        } else if ($1 == NULL) {
             $$ = makeListNode(NODE_DECLARATION_LIST);
             $$->left = $2;
         } else {
             $$ = appendToList($1, $2);
         }
-      }
+    }
 ;
 
 Declaration:
@@ -85,13 +88,9 @@ Declaration:
 ;
 
 ExternalRunDecl:
-    IDENTIFIER RUN '(' ParamListOpt ')' Block { 
-        $$ = makeVoidNode(NODE_EXTERNAL_RUN);
-        $$->left = makeIdentifierNode($1);
-        $$->middle = $4;  // parameters
-        $$->right = $6;   // body
-    }
-;
+IDENTIFIER RUN '(' ParamListOpt ')' Block {
+    $$ = linkExternalRunToSystem($1, $4, $6);
+}
 
 FieldDecl:
     FIELD IDENTIFIER StructBlock { 
@@ -107,7 +106,10 @@ StructBlock:
 VarDecls:
       /* empty */ { $$ = NULL; }
     | VarDecls VarDecl { 
-        if ($1 == NULL) {
+        if ($2 == NULL) {
+            // VarDecl может вернуть NULL для некоторых случаев
+            $$ = $1;
+        } else if ($1 == NULL) {
             $$ = makeListNode(NODE_VAR_DECL_LIST);
             $$->left = $2;
         } else {
@@ -149,7 +151,10 @@ OptionalBase:
 ComponentInits:
       /* empty */ { $$ = NULL; }
     | ComponentInits ComponentInit { 
-        if ($1 == NULL) {
+        if ($2 == NULL) {
+            // ComponentInit может вернуть NULL
+            $$ = $1;
+        } else if ($1 == NULL) {
             $$ = makeListNode(NODE_INIT_LIST);
             $$->left = $2;
         } else {
@@ -232,16 +237,17 @@ ExpressionList:
 ;
 
 SystemDecl:
-    SYSTEM IDENTIFIER '{' QueryDecls RunDecls '}' { 
-        $$ = makeSystemDeclNode($2, $4, $5);
-    }
-;
+SYSTEM IDENTIFIER '{' QueryDecls RunDecls '}' { 
+    $$ = makeSystemDeclNode($2, $4, $5);
+}
 
 QueryDecls:
       /* empty */ { $$ = NULL; }
     | QueryDecls QueryDecl { 
-        if ($1 == NULL) {
-            $$ = makeListNode(NODE_EXPRESSION_LIST);
+        if ($2 == NULL) {
+            $$ = $1;
+        } else if ($1 == NULL) {
+            $$ = makeListNode(NODE_QUERY_LIST);
             $$->left = $2;
         } else {
             $$ = appendToList($1, $2);
@@ -251,7 +257,18 @@ QueryDecls:
 
 QueryDecl:
     QUERY OptAlias '(' IDENTIFIER ')' ';' { 
-        $$ = makeQueryDeclNode($2 ? $2->string_val : NULL, $4);
+        // Исправляем логику алиасов
+        char* alias = NULL;
+        char* type_name = $4;
+        
+        if ($2 && $2->string_val) {
+            alias = $2->string_val;
+        } else {
+            // Алиас по умолчанию
+            alias = "item";
+        }
+        
+        $$ = makeQueryDeclNode(alias, type_name);
     }
 ;
 
@@ -263,8 +280,10 @@ OptAlias:
 RunDecls:
       /* empty */ { $$ = NULL; }
     | RunDecls RunDecl { 
-        if ($1 == NULL) {
-            $$ = makeListNode(NODE_EXPRESSION_LIST);
+        if ($2 == NULL) {
+            $$ = $1;
+        } else if ($1 == NULL) {
+            $$ = makeListNode(NODE_RUN_LIST);
             $$->left = $2;
         } else {
             $$ = appendToList($1, $2);
@@ -295,11 +314,22 @@ StatementsOpt:
 
 Statements:
       Statement { 
-        $$ = makeListNode(NODE_STATEMENT_LIST);
-        $$->left = $1;
+        if ($1 == NULL) {
+            $$ = NULL;
+        } else {
+            $$ = makeListNode(NODE_STATEMENT_LIST);
+            $$->left = $1;
+        }
       }
     | Statements Statement { 
-        $$ = appendToList($1, $2);
+        if ($2 == NULL) {
+            $$ = $1;
+        } else if ($1 == NULL) {
+            $$ = makeListNode(NODE_STATEMENT_LIST);
+            $$->left = $2;
+        } else {
+            $$ = appendToList($1, $2);
+        }
       }
 ;
 

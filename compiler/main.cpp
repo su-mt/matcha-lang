@@ -28,5 +28,10 @@ int main(int argc, char** argv) {
     }
 
     fclose(yyin);
+    cleanupRunBindings();
     return 0;
 }
+
+
+
+

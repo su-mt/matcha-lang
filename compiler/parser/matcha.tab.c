@@ -596,18 +596,18 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    60,    60,    68,    69,    80,    81,    82,    83,    84,
-      88,    97,   103,   104,   108,   109,   120,   123,   126,   130,
-     131,   132,   133,   134,   135,   139,   145,   146,   150,   151,
-     162,   168,   174,   180,   184,   191,   198,   199,   203,   207,
-     213,   216,   220,   221,   225,   229,   235,   241,   242,   253,
-     259,   260,   264,   265,   276,   279,   285,   292,   293,   297,
-     301,   307,   308,   309,   310,   311,   312,   313,   314,   318,
-     322,   325,   331,   337,   343,   344,   345,   349,   350,   354,
-     360,   367,   368,   372,   376,   382,   390,   391,   392,   393,
-     394,   398,   405,   409,   410,   411,   412,   413,   417,   418,
-     419,   420,   424,   425,   426,   427,   428,   429,   430,   431,
-     435,   436,   444,   452,   453,   457,   461
+       0,    60,    60,    68,    69,    83,    84,    85,    86,    87,
+      91,    96,   102,   103,   107,   108,   122,   125,   128,   132,
+     133,   134,   135,   136,   137,   141,   147,   148,   152,   153,
+     167,   173,   179,   185,   189,   196,   203,   204,   208,   212,
+     218,   221,   225,   226,   230,   234,   240,   245,   246,   259,
+     276,   277,   281,   282,   295,   298,   304,   311,   312,   316,
+     324,   337,   338,   339,   340,   341,   342,   343,   344,   348,
+     352,   355,   361,   367,   373,   374,   375,   379,   380,   384,
+     390,   397,   398,   402,   406,   412,   420,   421,   422,   423,
+     424,   428,   435,   439,   440,   441,   442,   443,   447,   448,
+     449,   450,   454,   455,   456,   457,   458,   459,   460,   461,
+     465,   466,   474,   482,   483,   487,   491
 };
 #endif
 
@@ -1344,66 +1344,66 @@ yyreduce:
 
   case 3: /* Declarations: %empty  */
 #line 68 "parser/matcha.y"
-                  { (yyval.node) = NULL; }
+                { (yyval.node) = NULL; }
 #line 1349 "parser/matcha.tab.c"
     break;
 
   case 4: /* Declarations: Declarations Declaration  */
 #line 69 "parser/matcha.y"
-                               { 
-        if ((yyvsp[-1].node) == NULL) {
+                               {
+        if ((yyvsp[0].node) == NULL) {
+            // Declaration вернул NULL (например, успешно обработанный external run)
+            (yyval.node) = (yyvsp[-1].node);
+        } else if ((yyvsp[-1].node) == NULL) {
             (yyval.node) = makeListNode(NODE_DECLARATION_LIST);
             (yyval.node)->left = (yyvsp[0].node);
         } else {
             (yyval.node) = appendToList((yyvsp[-1].node), (yyvsp[0].node));
         }
-      }
-#line 1362 "parser/matcha.tab.c"
+    }
+#line 1365 "parser/matcha.tab.c"
     break;
 
   case 5: /* Declaration: FieldDecl  */
-#line 80 "parser/matcha.y"
+#line 83 "parser/matcha.y"
                 { (yyval.node) = (yyvsp[0].node); }
-#line 1368 "parser/matcha.tab.c"
+#line 1371 "parser/matcha.tab.c"
     break;
 
   case 6: /* Declaration: ObjectDecl  */
-#line 81 "parser/matcha.y"
+#line 84 "parser/matcha.y"
                  { (yyval.node) = (yyvsp[0].node); }
-#line 1374 "parser/matcha.tab.c"
+#line 1377 "parser/matcha.tab.c"
     break;
 
   case 7: /* Declaration: SystemDecl  */
-#line 82 "parser/matcha.y"
+#line 85 "parser/matcha.y"
                  { (yyval.node) = (yyvsp[0].node); }
-#line 1380 "parser/matcha.tab.c"
+#line 1383 "parser/matcha.tab.c"
     break;
 
   case 8: /* Declaration: IncludeDecl  */
-#line 83 "parser/matcha.y"
+#line 86 "parser/matcha.y"
                   { (yyval.node) = (yyvsp[0].node); }
-#line 1386 "parser/matcha.tab.c"
+#line 1389 "parser/matcha.tab.c"
     break;
 
   case 9: /* Declaration: ExternalRunDecl  */
-#line 84 "parser/matcha.y"
+#line 87 "parser/matcha.y"
                       { (yyval.node) = (yyvsp[0].node); }
-#line 1392 "parser/matcha.tab.c"
+#line 1395 "parser/matcha.tab.c"
     break;
 
   case 10: /* ExternalRunDecl: IDENTIFIER RUN '(' ParamListOpt ')' Block  */
-#line 88 "parser/matcha.y"
-                                              { 
-        (yyval.node) = makeVoidNode(NODE_EXTERNAL_RUN);
-        (yyval.node)->left = makeIdentifierNode((yyvsp[-5].id));
-        (yyval.node)->middle = (yyvsp[-2].node);  // parameters
-        (yyval.node)->right = (yyvsp[0].node);   // body
-    }
+#line 91 "parser/matcha.y"
+                                          {
+    (yyval.node) = linkExternalRunToSystem((yyvsp[-5].id), (yyvsp[-2].node), (yyvsp[0].node));
+}
 #line 1403 "parser/matcha.tab.c"
     break;
 
   case 11: /* FieldDecl: FIELD IDENTIFIER StructBlock  */
-#line 97 "parser/matcha.y"
+#line 96 "parser/matcha.y"
                                  { 
         (yyval.node) = makeFieldDeclNode((yyvsp[-1].id), (yyvsp[0].node));
     }
@@ -1411,761 +1411,793 @@ yyreduce:
     break;
 
   case 12: /* StructBlock: '{' VarDecls '}'  */
-#line 103 "parser/matcha.y"
+#line 102 "parser/matcha.y"
                        { (yyval.node) = (yyvsp[-1].node); }
 #line 1417 "parser/matcha.tab.c"
     break;
 
   case 13: /* StructBlock: '(' VarDecls ')'  */
-#line 104 "parser/matcha.y"
+#line 103 "parser/matcha.y"
                        { (yyval.node) = (yyvsp[-1].node); }
 #line 1423 "parser/matcha.tab.c"
     break;
 
   case 14: /* VarDecls: %empty  */
-#line 108 "parser/matcha.y"
+#line 107 "parser/matcha.y"
                   { (yyval.node) = NULL; }
 #line 1429 "parser/matcha.tab.c"
     break;
 
   case 15: /* VarDecls: VarDecls VarDecl  */
-#line 109 "parser/matcha.y"
+#line 108 "parser/matcha.y"
                        { 
-        if ((yyvsp[-1].node) == NULL) {
+        if ((yyvsp[0].node) == NULL) {
+            // VarDecl может вернуть NULL для некоторых случаев
+            (yyval.node) = (yyvsp[-1].node);
+        } else if ((yyvsp[-1].node) == NULL) {
             (yyval.node) = makeListNode(NODE_VAR_DECL_LIST);
             (yyval.node)->left = (yyvsp[0].node);
         } else {
             (yyval.node) = appendToList((yyvsp[-1].node), (yyvsp[0].node));
         }
       }
-#line 1442 "parser/matcha.tab.c"
+#line 1445 "parser/matcha.tab.c"
     break;
 
   case 16: /* VarDecl: Type IDENTIFIER ';'  */
-#line 120 "parser/matcha.y"
+#line 122 "parser/matcha.y"
                           { 
         (yyval.node) = makeVarDeclNode((yyvsp[-2].node), (yyvsp[-1].id), NULL);
       }
-#line 1450 "parser/matcha.tab.c"
+#line 1453 "parser/matcha.tab.c"
     break;
 
   case 17: /* VarDecl: Type IDENTIFIER '=' Expression ';'  */
-#line 123 "parser/matcha.y"
+#line 125 "parser/matcha.y"
                                          { 
         (yyval.node) = makeVarDeclNode((yyvsp[-4].node), (yyvsp[-3].id), (yyvsp[-1].node));
       }
-#line 1458 "parser/matcha.tab.c"
+#line 1461 "parser/matcha.tab.c"
     break;
 
   case 18: /* VarDecl: IncludeDecl  */
-#line 126 "parser/matcha.y"
+#line 128 "parser/matcha.y"
                   { (yyval.node) = (yyvsp[0].node); }
-#line 1464 "parser/matcha.tab.c"
+#line 1467 "parser/matcha.tab.c"
     break;
 
   case 19: /* Type: TYPE_INT  */
-#line 130 "parser/matcha.y"
+#line 132 "parser/matcha.y"
                { (yyval.node) = makeTypeNode(TYPE_INT); }
-#line 1470 "parser/matcha.tab.c"
+#line 1473 "parser/matcha.tab.c"
     break;
 
   case 20: /* Type: TYPE_STRING  */
-#line 131 "parser/matcha.y"
+#line 133 "parser/matcha.y"
                   { (yyval.node) = makeTypeNode(TYPE_STRING); }
-#line 1476 "parser/matcha.tab.c"
+#line 1479 "parser/matcha.tab.c"
     break;
 
   case 21: /* Type: TYPE_DOUBLE  */
-#line 132 "parser/matcha.y"
+#line 134 "parser/matcha.y"
                   { (yyval.node) = makeTypeNode(TYPE_DOUBLE); }
-#line 1482 "parser/matcha.tab.c"
+#line 1485 "parser/matcha.tab.c"
     break;
 
   case 22: /* Type: TYPE_BOOL  */
-#line 133 "parser/matcha.y"
+#line 135 "parser/matcha.y"
                 { (yyval.node) = makeTypeNode(TYPE_BOOL); }
-#line 1488 "parser/matcha.tab.c"
+#line 1491 "parser/matcha.tab.c"
     break;
 
   case 23: /* Type: TYPE_AUTO  */
-#line 134 "parser/matcha.y"
+#line 136 "parser/matcha.y"
                 { (yyval.node) = makeTypeNode(TYPE_AUTO); }
-#line 1494 "parser/matcha.tab.c"
+#line 1497 "parser/matcha.tab.c"
     break;
 
   case 24: /* Type: IDENTIFIER  */
-#line 135 "parser/matcha.y"
+#line 137 "parser/matcha.y"
                  { (yyval.node) = makeIdentifierNode((yyvsp[0].id)); }
-#line 1500 "parser/matcha.tab.c"
+#line 1503 "parser/matcha.tab.c"
     break;
 
   case 25: /* ObjectDecl: OBJECT IDENTIFIER OptionalBase '{' ComponentInits '}'  */
-#line 139 "parser/matcha.y"
+#line 141 "parser/matcha.y"
                                                           { 
         (yyval.node) = makeObjectDeclNode((yyvsp[-4].id), (yyvsp[-3].node), (yyvsp[-1].node));
     }
-#line 1508 "parser/matcha.tab.c"
+#line 1511 "parser/matcha.tab.c"
     break;
 
   case 26: /* OptionalBase: %empty  */
-#line 145 "parser/matcha.y"
+#line 147 "parser/matcha.y"
                   { (yyval.node) = NULL; }
-#line 1514 "parser/matcha.tab.c"
+#line 1517 "parser/matcha.tab.c"
     break;
 
   case 27: /* OptionalBase: ':' IDENTIFIER  */
-#line 146 "parser/matcha.y"
+#line 148 "parser/matcha.y"
                      { (yyval.node) = makeIdentifierNode((yyvsp[0].id)); }
-#line 1520 "parser/matcha.tab.c"
+#line 1523 "parser/matcha.tab.c"
     break;
 
   case 28: /* ComponentInits: %empty  */
-#line 150 "parser/matcha.y"
+#line 152 "parser/matcha.y"
                   { (yyval.node) = NULL; }
-#line 1526 "parser/matcha.tab.c"
+#line 1529 "parser/matcha.tab.c"
     break;
 
   case 29: /* ComponentInits: ComponentInits ComponentInit  */
-#line 151 "parser/matcha.y"
+#line 153 "parser/matcha.y"
                                    { 
-        if ((yyvsp[-1].node) == NULL) {
+        if ((yyvsp[0].node) == NULL) {
+            // ComponentInit может вернуть NULL
+            (yyval.node) = (yyvsp[-1].node);
+        } else if ((yyvsp[-1].node) == NULL) {
             (yyval.node) = makeListNode(NODE_INIT_LIST);
             (yyval.node)->left = (yyvsp[0].node);
         } else {
             (yyval.node) = appendToList((yyvsp[-1].node), (yyvsp[0].node));
         }
       }
-#line 1539 "parser/matcha.tab.c"
+#line 1545 "parser/matcha.tab.c"
     break;
 
   case 30: /* ComponentInit: IDENTIFIER IDENTIFIER '=' Expression ';'  */
-#line 162 "parser/matcha.y"
+#line 167 "parser/matcha.y"
                                                { 
         ASTNode* type = makeIdentifierNode((yyvsp[-4].id));
         ASTNode* var = makeVarDeclNode(type, (yyvsp[-3].id), (yyvsp[-1].node));
         (yyval.node) = makeVoidNode(NODE_COMPONENT_INIT);
         (yyval.node)->left = var;
       }
-#line 1550 "parser/matcha.tab.c"
+#line 1556 "parser/matcha.tab.c"
     break;
 
   case 31: /* ComponentInit: IDENTIFIER IDENTIFIER '[' ']' '=' ArrayInit ';'  */
-#line 168 "parser/matcha.y"
+#line 173 "parser/matcha.y"
                                                       { 
         ASTNode* type = makeIdentifierNode((yyvsp[-6].id));
         ASTNode* var = makeVarDeclNode(type, (yyvsp[-5].id), (yyvsp[-1].node));
         (yyval.node) = makeVoidNode(NODE_COMPONENT_INIT);
         (yyval.node)->left = var;
       }
-#line 1561 "parser/matcha.tab.c"
+#line 1567 "parser/matcha.tab.c"
     break;
 
   case 32: /* ComponentInit: IDENTIFIER IDENTIFIER '=' ObjectInit ';'  */
-#line 174 "parser/matcha.y"
+#line 179 "parser/matcha.y"
                                                { 
         ASTNode* type = makeIdentifierNode((yyvsp[-4].id));
         ASTNode* var = makeVarDeclNode(type, (yyvsp[-3].id), (yyvsp[-1].node));
         (yyval.node) = makeVoidNode(NODE_COMPONENT_INIT);
         (yyval.node)->left = var;
       }
-#line 1572 "parser/matcha.tab.c"
-    break;
-
-  case 33: /* ComponentInit: IncludeDecl  */
-#line 180 "parser/matcha.y"
-                  { (yyval.node) = (yyvsp[0].node); }
 #line 1578 "parser/matcha.tab.c"
     break;
 
+  case 33: /* ComponentInit: IncludeDecl  */
+#line 185 "parser/matcha.y"
+                  { (yyval.node) = (yyvsp[0].node); }
+#line 1584 "parser/matcha.tab.c"
+    break;
+
   case 34: /* ArrayInit: '{' ExpressionListOpt '}'  */
-#line 184 "parser/matcha.y"
+#line 189 "parser/matcha.y"
                               { 
         (yyval.node) = makeVoidNode(NODE_ARRAY_INIT);
         (yyval.node)->left = (yyvsp[-1].node);
     }
-#line 1587 "parser/matcha.tab.c"
+#line 1593 "parser/matcha.tab.c"
     break;
 
   case 35: /* ObjectInit: '{' InitListOpt '}'  */
-#line 191 "parser/matcha.y"
+#line 196 "parser/matcha.y"
                         { 
         (yyval.node) = makeVoidNode(NODE_OBJECT_INIT);
         (yyval.node)->left = (yyvsp[-1].node);
     }
-#line 1596 "parser/matcha.tab.c"
-    break;
-
-  case 36: /* InitListOpt: %empty  */
-#line 198 "parser/matcha.y"
-                { (yyval.node) = NULL; }
 #line 1602 "parser/matcha.tab.c"
     break;
 
-  case 37: /* InitListOpt: InitList  */
-#line 199 "parser/matcha.y"
-               { (yyval.node) = (yyvsp[0].node); }
+  case 36: /* InitListOpt: %empty  */
+#line 203 "parser/matcha.y"
+                { (yyval.node) = NULL; }
 #line 1608 "parser/matcha.tab.c"
     break;
 
+  case 37: /* InitListOpt: InitList  */
+#line 204 "parser/matcha.y"
+               { (yyval.node) = (yyvsp[0].node); }
+#line 1614 "parser/matcha.tab.c"
+    break;
+
   case 38: /* InitList: InitElement  */
-#line 203 "parser/matcha.y"
+#line 208 "parser/matcha.y"
                 { 
         (yyval.node) = makeListNode(NODE_INIT_LIST);
         (yyval.node)->left = (yyvsp[0].node);
     }
-#line 1617 "parser/matcha.tab.c"
+#line 1623 "parser/matcha.tab.c"
     break;
 
   case 39: /* InitList: InitList ',' InitElement  */
-#line 207 "parser/matcha.y"
+#line 212 "parser/matcha.y"
                                { 
         (yyval.node) = appendToList((yyvsp[-2].node), (yyvsp[0].node));
     }
-#line 1625 "parser/matcha.tab.c"
+#line 1631 "parser/matcha.tab.c"
     break;
 
   case 40: /* InitElement: IDENTIFIER ':' Expression  */
-#line 213 "parser/matcha.y"
+#line 218 "parser/matcha.y"
                               { 
         (yyval.node) = makeBinOpNode(NODE_ASSIGN, makeIdentifierNode((yyvsp[-2].id)), (yyvsp[0].node));
     }
-#line 1633 "parser/matcha.tab.c"
-    break;
-
-  case 41: /* InitElement: Expression  */
-#line 216 "parser/matcha.y"
-                 { (yyval.node) = (yyvsp[0].node); }
 #line 1639 "parser/matcha.tab.c"
     break;
 
-  case 42: /* ExpressionListOpt: %empty  */
-#line 220 "parser/matcha.y"
-                  { (yyval.node) = NULL; }
+  case 41: /* InitElement: Expression  */
+#line 221 "parser/matcha.y"
+                 { (yyval.node) = (yyvsp[0].node); }
 #line 1645 "parser/matcha.tab.c"
     break;
 
-  case 43: /* ExpressionListOpt: ExpressionList  */
-#line 221 "parser/matcha.y"
-                     { (yyval.node) = (yyvsp[0].node); }
+  case 42: /* ExpressionListOpt: %empty  */
+#line 225 "parser/matcha.y"
+                  { (yyval.node) = NULL; }
 #line 1651 "parser/matcha.tab.c"
     break;
 
+  case 43: /* ExpressionListOpt: ExpressionList  */
+#line 226 "parser/matcha.y"
+                     { (yyval.node) = (yyvsp[0].node); }
+#line 1657 "parser/matcha.tab.c"
+    break;
+
   case 44: /* ExpressionList: Expression  */
-#line 225 "parser/matcha.y"
+#line 230 "parser/matcha.y"
                  { 
         (yyval.node) = makeListNode(NODE_EXPRESSION_LIST);
         (yyval.node)->left = (yyvsp[0].node);
       }
-#line 1660 "parser/matcha.tab.c"
+#line 1666 "parser/matcha.tab.c"
     break;
 
   case 45: /* ExpressionList: ExpressionList ',' Expression  */
-#line 229 "parser/matcha.y"
+#line 234 "parser/matcha.y"
                                     { 
         (yyval.node) = appendToList((yyvsp[-2].node), (yyvsp[0].node));
       }
-#line 1668 "parser/matcha.tab.c"
+#line 1674 "parser/matcha.tab.c"
     break;
 
   case 46: /* SystemDecl: SYSTEM IDENTIFIER '{' QueryDecls RunDecls '}'  */
-#line 235 "parser/matcha.y"
-                                                  { 
-        (yyval.node) = makeSystemDeclNode((yyvsp[-4].id), (yyvsp[-2].node), (yyvsp[-1].node));
-    }
-#line 1676 "parser/matcha.tab.c"
-    break;
-
-  case 47: /* QueryDecls: %empty  */
-#line 241 "parser/matcha.y"
-                  { (yyval.node) = NULL; }
+#line 240 "parser/matcha.y"
+                                              { 
+    (yyval.node) = makeSystemDeclNode((yyvsp[-4].id), (yyvsp[-2].node), (yyvsp[-1].node));
+}
 #line 1682 "parser/matcha.tab.c"
     break;
 
+  case 47: /* QueryDecls: %empty  */
+#line 245 "parser/matcha.y"
+                  { (yyval.node) = NULL; }
+#line 1688 "parser/matcha.tab.c"
+    break;
+
   case 48: /* QueryDecls: QueryDecls QueryDecl  */
-#line 242 "parser/matcha.y"
+#line 246 "parser/matcha.y"
                            { 
-        if ((yyvsp[-1].node) == NULL) {
-            (yyval.node) = makeListNode(NODE_EXPRESSION_LIST);
+        if ((yyvsp[0].node) == NULL) {
+            (yyval.node) = (yyvsp[-1].node);
+        } else if ((yyvsp[-1].node) == NULL) {
+            (yyval.node) = makeListNode(NODE_QUERY_LIST);
             (yyval.node)->left = (yyvsp[0].node);
         } else {
             (yyval.node) = appendToList((yyvsp[-1].node), (yyvsp[0].node));
         }
       }
-#line 1695 "parser/matcha.tab.c"
-    break;
-
-  case 49: /* QueryDecl: QUERY OptAlias '(' IDENTIFIER ')' ';'  */
-#line 253 "parser/matcha.y"
-                                          { 
-        (yyval.node) = makeQueryDeclNode((yyvsp[-4].node) ? (yyvsp[-4].node)->string_val : NULL, (yyvsp[-2].id));
-    }
 #line 1703 "parser/matcha.tab.c"
     break;
 
-  case 50: /* OptAlias: %empty  */
+  case 49: /* QueryDecl: QUERY OptAlias '(' IDENTIFIER ')' ';'  */
 #line 259 "parser/matcha.y"
+                                          { 
+        // Исправляем логику алиасов
+        char* alias = NULL;
+        char* type_name = (yyvsp[-2].id);
+        
+        if ((yyvsp[-4].node) && (yyvsp[-4].node)->string_val) {
+            alias = (yyvsp[-4].node)->string_val;
+        } else {
+            // Алиас по умолчанию
+            alias = "item";
+        }
+        
+        (yyval.node) = makeQueryDeclNode(alias, type_name);
+    }
+#line 1722 "parser/matcha.tab.c"
+    break;
+
+  case 50: /* OptAlias: %empty  */
+#line 276 "parser/matcha.y"
                   { (yyval.node) = NULL; }
-#line 1709 "parser/matcha.tab.c"
+#line 1728 "parser/matcha.tab.c"
     break;
 
   case 51: /* OptAlias: IDENTIFIER  */
-#line 260 "parser/matcha.y"
+#line 277 "parser/matcha.y"
                  { (yyval.node) = makeIdentifierNode((yyvsp[0].id)); }
-#line 1715 "parser/matcha.tab.c"
+#line 1734 "parser/matcha.tab.c"
     break;
 
   case 52: /* RunDecls: %empty  */
-#line 264 "parser/matcha.y"
+#line 281 "parser/matcha.y"
                   { (yyval.node) = NULL; }
-#line 1721 "parser/matcha.tab.c"
+#line 1740 "parser/matcha.tab.c"
     break;
 
   case 53: /* RunDecls: RunDecls RunDecl  */
-#line 265 "parser/matcha.y"
+#line 282 "parser/matcha.y"
                        { 
-        if ((yyvsp[-1].node) == NULL) {
-            (yyval.node) = makeListNode(NODE_EXPRESSION_LIST);
+        if ((yyvsp[0].node) == NULL) {
+            (yyval.node) = (yyvsp[-1].node);
+        } else if ((yyvsp[-1].node) == NULL) {
+            (yyval.node) = makeListNode(NODE_RUN_LIST);
             (yyval.node)->left = (yyvsp[0].node);
         } else {
             (yyval.node) = appendToList((yyvsp[-1].node), (yyvsp[0].node));
         }
       }
-#line 1734 "parser/matcha.tab.c"
+#line 1755 "parser/matcha.tab.c"
     break;
 
   case 54: /* RunDecl: RUN '(' ParamListOpt ')' ';'  */
-#line 276 "parser/matcha.y"
+#line 295 "parser/matcha.y"
                                    { 
         (yyval.node) = makeRunDeclNode((yyvsp[-2].node), NULL);
       }
-#line 1742 "parser/matcha.tab.c"
+#line 1763 "parser/matcha.tab.c"
     break;
 
   case 55: /* RunDecl: RUN '(' ParamListOpt ')' Block  */
-#line 279 "parser/matcha.y"
+#line 298 "parser/matcha.y"
                                      { 
         (yyval.node) = makeRunDeclNode((yyvsp[-2].node), (yyvsp[0].node));
       }
-#line 1750 "parser/matcha.tab.c"
+#line 1771 "parser/matcha.tab.c"
     break;
 
   case 56: /* Block: '{' StatementsOpt '}'  */
-#line 285 "parser/matcha.y"
+#line 304 "parser/matcha.y"
                           { 
         (yyval.node) = makeVoidNode(NODE_BLOCK);
         (yyval.node)->left = (yyvsp[-1].node);
     }
-#line 1759 "parser/matcha.tab.c"
-    break;
-
-  case 57: /* StatementsOpt: %empty  */
-#line 292 "parser/matcha.y"
-                  { (yyval.node) = NULL; }
-#line 1765 "parser/matcha.tab.c"
-    break;
-
-  case 58: /* StatementsOpt: Statements  */
-#line 293 "parser/matcha.y"
-                 { (yyval.node) = (yyvsp[0].node); }
-#line 1771 "parser/matcha.tab.c"
-    break;
-
-  case 59: /* Statements: Statement  */
-#line 297 "parser/matcha.y"
-                { 
-        (yyval.node) = makeListNode(NODE_STATEMENT_LIST);
-        (yyval.node)->left = (yyvsp[0].node);
-      }
 #line 1780 "parser/matcha.tab.c"
     break;
 
-  case 60: /* Statements: Statements Statement  */
-#line 301 "parser/matcha.y"
-                           { 
-        (yyval.node) = appendToList((yyvsp[-1].node), (yyvsp[0].node));
+  case 57: /* StatementsOpt: %empty  */
+#line 311 "parser/matcha.y"
+                  { (yyval.node) = NULL; }
+#line 1786 "parser/matcha.tab.c"
+    break;
+
+  case 58: /* StatementsOpt: Statements  */
+#line 312 "parser/matcha.y"
+                 { (yyval.node) = (yyvsp[0].node); }
+#line 1792 "parser/matcha.tab.c"
+    break;
+
+  case 59: /* Statements: Statement  */
+#line 316 "parser/matcha.y"
+                { 
+        if ((yyvsp[0].node) == NULL) {
+            (yyval.node) = NULL;
+        } else {
+            (yyval.node) = makeListNode(NODE_STATEMENT_LIST);
+            (yyval.node)->left = (yyvsp[0].node);
+        }
       }
-#line 1788 "parser/matcha.tab.c"
+#line 1805 "parser/matcha.tab.c"
+    break;
+
+  case 60: /* Statements: Statements Statement  */
+#line 324 "parser/matcha.y"
+                           { 
+        if ((yyvsp[0].node) == NULL) {
+            (yyval.node) = (yyvsp[-1].node);
+        } else if ((yyvsp[-1].node) == NULL) {
+            (yyval.node) = makeListNode(NODE_STATEMENT_LIST);
+            (yyval.node)->left = (yyvsp[0].node);
+        } else {
+            (yyval.node) = appendToList((yyvsp[-1].node), (yyvsp[0].node));
+        }
+      }
+#line 1820 "parser/matcha.tab.c"
     break;
 
   case 61: /* Statement: ExpressionStatement  */
-#line 307 "parser/matcha.y"
+#line 337 "parser/matcha.y"
                           { (yyval.node) = (yyvsp[0].node); }
-#line 1794 "parser/matcha.tab.c"
+#line 1826 "parser/matcha.tab.c"
     break;
 
   case 62: /* Statement: ForStatement  */
-#line 308 "parser/matcha.y"
+#line 338 "parser/matcha.y"
                    { (yyval.node) = (yyvsp[0].node); }
-#line 1800 "parser/matcha.tab.c"
+#line 1832 "parser/matcha.tab.c"
     break;
 
   case 63: /* Statement: ForEachStatement  */
-#line 309 "parser/matcha.y"
+#line 339 "parser/matcha.y"
                        { (yyval.node) = (yyvsp[0].node); }
-#line 1806 "parser/matcha.tab.c"
+#line 1838 "parser/matcha.tab.c"
     break;
 
   case 64: /* Statement: IfStatement  */
-#line 310 "parser/matcha.y"
+#line 340 "parser/matcha.y"
                   { (yyval.node) = (yyvsp[0].node); }
-#line 1812 "parser/matcha.tab.c"
+#line 1844 "parser/matcha.tab.c"
     break;
 
   case 65: /* Statement: WhileStatement  */
-#line 311 "parser/matcha.y"
+#line 341 "parser/matcha.y"
                      { (yyval.node) = (yyvsp[0].node); }
-#line 1818 "parser/matcha.tab.c"
-    break;
-
-  case 66: /* Statement: ReturnStatement  */
-#line 312 "parser/matcha.y"
-                      { (yyval.node) = (yyvsp[0].node); }
-#line 1824 "parser/matcha.tab.c"
-    break;
-
-  case 67: /* Statement: VarDecl  */
-#line 313 "parser/matcha.y"
-              { (yyval.node) = (yyvsp[0].node); }
-#line 1830 "parser/matcha.tab.c"
-    break;
-
-  case 68: /* Statement: Block  */
-#line 314 "parser/matcha.y"
-            { (yyval.node) = (yyvsp[0].node); }
-#line 1836 "parser/matcha.tab.c"
-    break;
-
-  case 69: /* ExpressionStatement: Expression ';'  */
-#line 318 "parser/matcha.y"
-                     { (yyval.node) = (yyvsp[-1].node); }
-#line 1842 "parser/matcha.tab.c"
-    break;
-
-  case 70: /* IfStatement: IF '(' Expression ')' Statement  */
-#line 322 "parser/matcha.y"
-                                      { 
-        (yyval.node) = makeIfNode((yyvsp[-2].node), (yyvsp[0].node), NULL);
-      }
 #line 1850 "parser/matcha.tab.c"
     break;
 
-  case 71: /* IfStatement: IF '(' Expression ')' Statement ELSE Statement  */
-#line 325 "parser/matcha.y"
-                                                     { 
-        (yyval.node) = makeIfNode((yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[0].node));
-      }
-#line 1858 "parser/matcha.tab.c"
+  case 66: /* Statement: ReturnStatement  */
+#line 342 "parser/matcha.y"
+                      { (yyval.node) = (yyvsp[0].node); }
+#line 1856 "parser/matcha.tab.c"
     break;
 
-  case 72: /* WhileStatement: WHILE '(' Expression ')' Statement  */
-#line 331 "parser/matcha.y"
-                                       { 
-        (yyval.node) = makeWhileNode((yyvsp[-2].node), (yyvsp[0].node));
-    }
-#line 1866 "parser/matcha.tab.c"
+  case 67: /* Statement: VarDecl  */
+#line 343 "parser/matcha.y"
+              { (yyval.node) = (yyvsp[0].node); }
+#line 1862 "parser/matcha.tab.c"
     break;
 
-  case 73: /* ForStatement: FOR '(' ForInitOpt ';' ExpressionOpt ';' ExpressionOpt ')' Statement  */
-#line 337 "parser/matcha.y"
-                                                                         { 
-        (yyval.node) = makeForNode((yyvsp[-6].node), (yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[0].node));
-    }
+  case 68: /* Statement: Block  */
+#line 344 "parser/matcha.y"
+            { (yyval.node) = (yyvsp[0].node); }
+#line 1868 "parser/matcha.tab.c"
+    break;
+
+  case 69: /* ExpressionStatement: Expression ';'  */
+#line 348 "parser/matcha.y"
+                     { (yyval.node) = (yyvsp[-1].node); }
 #line 1874 "parser/matcha.tab.c"
     break;
 
-  case 74: /* ForInitOpt: %empty  */
-#line 343 "parser/matcha.y"
-                  { (yyval.node) = NULL; }
-#line 1880 "parser/matcha.tab.c"
+  case 70: /* IfStatement: IF '(' Expression ')' Statement  */
+#line 352 "parser/matcha.y"
+                                      { 
+        (yyval.node) = makeIfNode((yyvsp[-2].node), (yyvsp[0].node), NULL);
+      }
+#line 1882 "parser/matcha.tab.c"
     break;
 
-  case 75: /* ForInitOpt: VarDecl  */
-#line 344 "parser/matcha.y"
-              { (yyval.node) = (yyvsp[0].node); }
-#line 1886 "parser/matcha.tab.c"
+  case 71: /* IfStatement: IF '(' Expression ')' Statement ELSE Statement  */
+#line 355 "parser/matcha.y"
+                                                     { 
+        (yyval.node) = makeIfNode((yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[0].node));
+      }
+#line 1890 "parser/matcha.tab.c"
     break;
 
-  case 76: /* ForInitOpt: Expression  */
-#line 345 "parser/matcha.y"
-                 { (yyval.node) = (yyvsp[0].node); }
-#line 1892 "parser/matcha.tab.c"
-    break;
-
-  case 77: /* ExpressionOpt: %empty  */
-#line 349 "parser/matcha.y"
-                  { (yyval.node) = NULL; }
+  case 72: /* WhileStatement: WHILE '(' Expression ')' Statement  */
+#line 361 "parser/matcha.y"
+                                       { 
+        (yyval.node) = makeWhileNode((yyvsp[-2].node), (yyvsp[0].node));
+    }
 #line 1898 "parser/matcha.tab.c"
     break;
 
-  case 78: /* ExpressionOpt: Expression  */
-#line 350 "parser/matcha.y"
-                 { (yyval.node) = (yyvsp[0].node); }
-#line 1904 "parser/matcha.tab.c"
+  case 73: /* ForStatement: FOR '(' ForInitOpt ';' ExpressionOpt ';' ExpressionOpt ')' Statement  */
+#line 367 "parser/matcha.y"
+                                                                         { 
+        (yyval.node) = makeForNode((yyvsp[-6].node), (yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[0].node));
+    }
+#line 1906 "parser/matcha.tab.c"
     break;
 
-  case 79: /* ForEachStatement: FOR '(' Type IDENTIFIER ':' Expression ')' Statement  */
-#line 354 "parser/matcha.y"
-                                                         { 
-        (yyval.node) = makeForEachNode((yyvsp[-5].node), (yyvsp[-4].id), (yyvsp[-2].node), (yyvsp[0].node));
-    }
+  case 74: /* ForInitOpt: %empty  */
+#line 373 "parser/matcha.y"
+                  { (yyval.node) = NULL; }
 #line 1912 "parser/matcha.tab.c"
     break;
 
+  case 75: /* ForInitOpt: VarDecl  */
+#line 374 "parser/matcha.y"
+              { (yyval.node) = (yyvsp[0].node); }
+#line 1918 "parser/matcha.tab.c"
+    break;
+
+  case 76: /* ForInitOpt: Expression  */
+#line 375 "parser/matcha.y"
+                 { (yyval.node) = (yyvsp[0].node); }
+#line 1924 "parser/matcha.tab.c"
+    break;
+
+  case 77: /* ExpressionOpt: %empty  */
+#line 379 "parser/matcha.y"
+                  { (yyval.node) = NULL; }
+#line 1930 "parser/matcha.tab.c"
+    break;
+
+  case 78: /* ExpressionOpt: Expression  */
+#line 380 "parser/matcha.y"
+                 { (yyval.node) = (yyvsp[0].node); }
+#line 1936 "parser/matcha.tab.c"
+    break;
+
+  case 79: /* ForEachStatement: FOR '(' Type IDENTIFIER ':' Expression ')' Statement  */
+#line 384 "parser/matcha.y"
+                                                         { 
+        (yyval.node) = makeForEachNode((yyvsp[-5].node), (yyvsp[-4].id), (yyvsp[-2].node), (yyvsp[0].node));
+    }
+#line 1944 "parser/matcha.tab.c"
+    break;
+
   case 80: /* ReturnStatement: RETURN Expression ';'  */
-#line 360 "parser/matcha.y"
+#line 390 "parser/matcha.y"
                           { 
         (yyval.node) = makeVoidNode(NODE_RETURN);
         (yyval.node)->left = (yyvsp[-1].node);
     }
-#line 1921 "parser/matcha.tab.c"
+#line 1953 "parser/matcha.tab.c"
     break;
 
   case 81: /* ParamListOpt: %empty  */
-#line 367 "parser/matcha.y"
+#line 397 "parser/matcha.y"
                   { (yyval.node) = NULL; }
-#line 1927 "parser/matcha.tab.c"
+#line 1959 "parser/matcha.tab.c"
     break;
 
   case 82: /* ParamListOpt: ParamList  */
-#line 368 "parser/matcha.y"
+#line 398 "parser/matcha.y"
                 { (yyval.node) = (yyvsp[0].node); }
-#line 1933 "parser/matcha.tab.c"
+#line 1965 "parser/matcha.tab.c"
     break;
 
   case 83: /* ParamList: Param  */
-#line 372 "parser/matcha.y"
+#line 402 "parser/matcha.y"
             { 
         (yyval.node) = makeListNode(NODE_PARAM_LIST);
         (yyval.node)->left = (yyvsp[0].node);
       }
-#line 1942 "parser/matcha.tab.c"
+#line 1974 "parser/matcha.tab.c"
     break;
 
   case 84: /* ParamList: ParamList ',' Param  */
-#line 376 "parser/matcha.y"
+#line 406 "parser/matcha.y"
                           { 
         (yyval.node) = appendToList((yyvsp[-2].node), (yyvsp[0].node));
       }
-#line 1950 "parser/matcha.tab.c"
+#line 1982 "parser/matcha.tab.c"
     break;
 
   case 85: /* Param: Type IDENTIFIER  */
-#line 382 "parser/matcha.y"
+#line 412 "parser/matcha.y"
                     { 
         (yyval.node) = makeVoidNode(NODE_PARAM);
         (yyval.node)->left = (yyvsp[-1].node);
         (yyval.node)->right = makeIdentifierNode((yyvsp[0].id));
     }
-#line 1960 "parser/matcha.tab.c"
+#line 1992 "parser/matcha.tab.c"
     break;
 
   case 86: /* Expression: Literal  */
-#line 390 "parser/matcha.y"
+#line 420 "parser/matcha.y"
               { (yyval.node) = (yyvsp[0].node); }
-#line 1966 "parser/matcha.tab.c"
+#line 1998 "parser/matcha.tab.c"
     break;
 
   case 87: /* Expression: ObjectInit  */
-#line 391 "parser/matcha.y"
+#line 421 "parser/matcha.y"
                  { (yyval.node) = (yyvsp[0].node); }
-#line 1972 "parser/matcha.tab.c"
+#line 2004 "parser/matcha.tab.c"
     break;
 
   case 88: /* Expression: Accessor  */
-#line 392 "parser/matcha.y"
+#line 422 "parser/matcha.y"
                { (yyval.node) = (yyvsp[0].node); }
-#line 1978 "parser/matcha.tab.c"
+#line 2010 "parser/matcha.tab.c"
     break;
 
   case 89: /* Expression: '(' Expression ')'  */
-#line 393 "parser/matcha.y"
+#line 423 "parser/matcha.y"
                          { (yyval.node) = (yyvsp[-1].node); }
-#line 1984 "parser/matcha.tab.c"
+#line 2016 "parser/matcha.tab.c"
     break;
 
   case 90: /* Expression: Expression BinOp Expression  */
-#line 394 "parser/matcha.y"
+#line 424 "parser/matcha.y"
                                   { 
         (yyval.node) = makeBinOpNode((yyvsp[-1].node)->type, (yyvsp[-2].node), (yyvsp[0].node));
         free((yyvsp[-1].node)); // освобождаем временный узел оператора
       }
-#line 1993 "parser/matcha.tab.c"
+#line 2025 "parser/matcha.tab.c"
     break;
 
   case 91: /* Expression: Lvalue AssignOp Expression  */
-#line 398 "parser/matcha.y"
+#line 428 "parser/matcha.y"
                                  { 
         (yyval.node) = makeBinOpNode((yyvsp[-1].node)->type, (yyvsp[-2].node), (yyvsp[0].node));
         free((yyvsp[-1].node)); // освобождаем временный узел оператора
       }
-#line 2002 "parser/matcha.tab.c"
+#line 2034 "parser/matcha.tab.c"
     break;
 
   case 92: /* Lvalue: Accessor  */
-#line 405 "parser/matcha.y"
+#line 435 "parser/matcha.y"
              { (yyval.node) = (yyvsp[0].node); }
-#line 2008 "parser/matcha.tab.c"
+#line 2040 "parser/matcha.tab.c"
     break;
 
   case 93: /* AssignOp: '='  */
-#line 409 "parser/matcha.y"
+#line 439 "parser/matcha.y"
           { (yyval.node) = makeVoidNode(NODE_ASSIGN); }
-#line 2014 "parser/matcha.tab.c"
+#line 2046 "parser/matcha.tab.c"
     break;
 
   case 94: /* AssignOp: ADD_ASSIGN  */
-#line 410 "parser/matcha.y"
+#line 440 "parser/matcha.y"
                  { (yyval.node) = makeVoidNode(NODE_ADD_ASSIGN); }
-#line 2020 "parser/matcha.tab.c"
+#line 2052 "parser/matcha.tab.c"
     break;
 
   case 95: /* AssignOp: SUB_ASSIGN  */
-#line 411 "parser/matcha.y"
+#line 441 "parser/matcha.y"
                  { (yyval.node) = makeVoidNode(NODE_SUB_ASSIGN); }
-#line 2026 "parser/matcha.tab.c"
+#line 2058 "parser/matcha.tab.c"
     break;
 
   case 96: /* AssignOp: MUL_ASSIGN  */
-#line 412 "parser/matcha.y"
+#line 442 "parser/matcha.y"
                  { (yyval.node) = makeVoidNode(NODE_MUL_ASSIGN); }
-#line 2032 "parser/matcha.tab.c"
+#line 2064 "parser/matcha.tab.c"
     break;
 
   case 97: /* AssignOp: DIV_ASSIGN  */
-#line 413 "parser/matcha.y"
+#line 443 "parser/matcha.y"
                  { (yyval.node) = makeVoidNode(NODE_DIV_ASSIGN); }
-#line 2038 "parser/matcha.tab.c"
+#line 2070 "parser/matcha.tab.c"
     break;
 
   case 98: /* Literal: LIT_INTEGER  */
-#line 417 "parser/matcha.y"
+#line 447 "parser/matcha.y"
                   { (yyval.node) = makeIntNode((yyvsp[0].int_val)); }
-#line 2044 "parser/matcha.tab.c"
+#line 2076 "parser/matcha.tab.c"
     break;
 
   case 99: /* Literal: LIT_DOUBLE  */
-#line 418 "parser/matcha.y"
+#line 448 "parser/matcha.y"
                  { (yyval.node) = makeDoubleNode((yyvsp[0].double_val)); }
-#line 2050 "parser/matcha.tab.c"
+#line 2082 "parser/matcha.tab.c"
     break;
 
   case 100: /* Literal: LIT_STRING  */
-#line 419 "parser/matcha.y"
+#line 449 "parser/matcha.y"
                  { (yyval.node) = makeStringNode((yyvsp[0].str_val)); }
-#line 2056 "parser/matcha.tab.c"
+#line 2088 "parser/matcha.tab.c"
     break;
 
   case 101: /* Literal: LIT_BOOL  */
-#line 420 "parser/matcha.y"
+#line 450 "parser/matcha.y"
                { (yyval.node) = makeBoolNode((yyvsp[0].bool_val)); }
-#line 2062 "parser/matcha.tab.c"
+#line 2094 "parser/matcha.tab.c"
     break;
 
   case 102: /* BinOp: '+'  */
-#line 424 "parser/matcha.y"
+#line 454 "parser/matcha.y"
         { (yyval.node) = makeVoidNode(NODE_ADD); }
-#line 2068 "parser/matcha.tab.c"
+#line 2100 "parser/matcha.tab.c"
     break;
 
   case 103: /* BinOp: '-'  */
-#line 425 "parser/matcha.y"
+#line 455 "parser/matcha.y"
           { (yyval.node) = makeVoidNode(NODE_SUB); }
-#line 2074 "parser/matcha.tab.c"
+#line 2106 "parser/matcha.tab.c"
     break;
 
   case 104: /* BinOp: '*'  */
-#line 426 "parser/matcha.y"
+#line 456 "parser/matcha.y"
           { (yyval.node) = makeVoidNode(NODE_MUL); }
-#line 2080 "parser/matcha.tab.c"
+#line 2112 "parser/matcha.tab.c"
     break;
 
   case 105: /* BinOp: '/'  */
-#line 427 "parser/matcha.y"
+#line 457 "parser/matcha.y"
           { (yyval.node) = makeVoidNode(NODE_DIV); }
-#line 2086 "parser/matcha.tab.c"
+#line 2118 "parser/matcha.tab.c"
     break;
 
   case 106: /* BinOp: EQEQ  */
-#line 428 "parser/matcha.y"
+#line 458 "parser/matcha.y"
            { (yyval.node) = makeVoidNode(NODE_EQ); }
-#line 2092 "parser/matcha.tab.c"
+#line 2124 "parser/matcha.tab.c"
     break;
 
   case 107: /* BinOp: NOTEQ  */
-#line 429 "parser/matcha.y"
+#line 459 "parser/matcha.y"
             { (yyval.node) = makeVoidNode(NODE_NEQ); }
-#line 2098 "parser/matcha.tab.c"
+#line 2130 "parser/matcha.tab.c"
     break;
 
   case 108: /* BinOp: '<'  */
-#line 430 "parser/matcha.y"
+#line 460 "parser/matcha.y"
           { (yyval.node) = makeVoidNode(NODE_LT); }
-#line 2104 "parser/matcha.tab.c"
+#line 2136 "parser/matcha.tab.c"
     break;
 
   case 109: /* BinOp: '>'  */
-#line 431 "parser/matcha.y"
+#line 461 "parser/matcha.y"
           { (yyval.node) = makeVoidNode(NODE_GT); }
-#line 2110 "parser/matcha.tab.c"
+#line 2142 "parser/matcha.tab.c"
     break;
 
   case 110: /* Accessor: IDENTIFIER  */
-#line 435 "parser/matcha.y"
+#line 465 "parser/matcha.y"
                  { (yyval.node) = makeIdentifierNode((yyvsp[0].id)); }
-#line 2116 "parser/matcha.tab.c"
+#line 2148 "parser/matcha.tab.c"
     break;
 
   case 111: /* Accessor: Accessor '.' IDENTIFIER  */
-#line 436 "parser/matcha.y"
+#line 466 "parser/matcha.y"
                               { 
         (yyval.node) = makeVoidNode(NODE_MEMBER_ACCESS);
         (yyval.node)->left = (yyvsp[-2].node);
         (yyval.node)->right = makeIdentifierNode((yyvsp[0].id));
       }
-#line 2126 "parser/matcha.tab.c"
+#line 2158 "parser/matcha.tab.c"
     break;
 
   case 112: /* IncludeDecl: INCLUDE IDENTIFIER ExcludeListOpt ';'  */
-#line 444 "parser/matcha.y"
+#line 474 "parser/matcha.y"
                                           { 
         (yyval.node) = makeVoidNode(NODE_INCLUDE);
         (yyval.node)->left = makeIdentifierNode((yyvsp[-2].id));
         (yyval.node)->right = (yyvsp[-1].node);
     }
-#line 2136 "parser/matcha.tab.c"
+#line 2168 "parser/matcha.tab.c"
     break;
 
   case 113: /* ExcludeListOpt: %empty  */
-#line 452 "parser/matcha.y"
+#line 482 "parser/matcha.y"
                   { (yyval.node) = NULL; }
-#line 2142 "parser/matcha.tab.c"
+#line 2174 "parser/matcha.tab.c"
     break;
 
   case 114: /* ExcludeListOpt: '\\' ExcludeList  */
-#line 453 "parser/matcha.y"
+#line 483 "parser/matcha.y"
                        { (yyval.node) = (yyvsp[0].node); }
-#line 2148 "parser/matcha.tab.c"
+#line 2180 "parser/matcha.tab.c"
     break;
 
   case 115: /* ExcludeList: IDENTIFIER  */
-#line 457 "parser/matcha.y"
+#line 487 "parser/matcha.y"
                  { 
         (yyval.node) = makeListNode(NODE_EXPRESSION_LIST);
         (yyval.node)->left = makeIdentifierNode((yyvsp[0].id));
       }
-#line 2157 "parser/matcha.tab.c"
+#line 2189 "parser/matcha.tab.c"
     break;
 
   case 116: /* ExcludeList: ExcludeList ',' IDENTIFIER  */
-#line 461 "parser/matcha.y"
+#line 491 "parser/matcha.y"
                                  { 
         (yyval.node) = appendToList((yyvsp[-2].node), makeIdentifierNode((yyvsp[0].id)));
       }
-#line 2165 "parser/matcha.tab.c"
+#line 2197 "parser/matcha.tab.c"
     break;
 
 
-#line 2169 "parser/matcha.tab.c"
+#line 2201 "parser/matcha.tab.c"
 
       default: break;
     }
@@ -2358,7 +2390,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 466 "parser/matcha.y"
+#line 496 "parser/matcha.y"
 
 
 void yyerror(const char* s) {
