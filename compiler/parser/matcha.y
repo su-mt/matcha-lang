@@ -12,13 +12,12 @@ extern int col_num;
 extern char* yytext;
 void yyerror(const char* s);
 ASTNode* root = NULL;
-
 %}
 
 %union {
     int int_val;
     double double_val;
-    u_int8_t bool_val;
+    uint8_t bool_val;
     char* str_val;
     char* id;
     ASTNode* node;
@@ -58,16 +57,21 @@ ASTNode* root = NULL;
 %%
 
 Program:
-    Declarations { $$ = $1; root = $$; }
+    Declarations { 
+        $$ = createNode(NODE_PROGRAM);
+        $$->left = $1;
+        root = $$; 
+    }
 ;
 
 Declarations:
       /* empty */ { $$ = NULL; }
     | Declarations Declaration { 
         if ($1 == NULL) {
-            $$ = $2;
+            $$ = makeListNode(NODE_DECLARATION_LIST);
+            $$->left = $2;
         } else {
-            $$ = makeBinOpNode(NODE_DECLARATION_LIST, $1, $2); // используем как список
+            $$ = appendToList($1, $2);
         }
       }
 ;
@@ -81,14 +85,17 @@ Declaration:
 ;
 
 ExternalRunDecl:
-    IDENTIFIER RUN '(' ParamListOpt ')' Block { $$ = makeVoidNode(NODE_RUN); }
+    IDENTIFIER RUN '(' ParamListOpt ')' Block { 
+        $$ = makeVoidNode(NODE_EXTERNAL_RUN);
+        $$->left = makeIdentifierNode($1);
+        $$->middle = $4;  // parameters
+        $$->right = $6;   // body
+    }
 ;
 
 FieldDecl:
     FIELD IDENTIFIER StructBlock { 
-        // Создаем узел с именем поля
-        ASTNode* nameNode = makeIdentifierNode($2); // Нужна функция для создания узла с именем
-        $$ = makeBinOpNode(NODE_FIELD_DECL, nameNode, $3); 
+        $$ = makeFieldDeclNode($2, $3);
     }
 ;
 
@@ -101,62 +108,90 @@ VarDecls:
       /* empty */ { $$ = NULL; }
     | VarDecls VarDecl { 
         if ($1 == NULL) {
-            $$ = $2;
+            $$ = makeListNode(NODE_VAR_DECL_LIST);
+            $$->left = $2;
         } else {
-            $$ = makeBinOpNode(NODE_IDENTIFIER, $1, $2);
+            $$ = appendToList($1, $2);
         }
       }
 ;
 
 VarDecl:
       Type IDENTIFIER ';' { 
-        ASTNode* nameNode = makeIdentifierNode($2);
-        $$ = makeBinOpNode(NODE_VAR_DECL, $1, nameNode); 
+        $$ = makeVarDeclNode($1, $2, NULL);
       }
     | Type IDENTIFIER '=' Expression ';' { 
-        ASTNode* nameNode = makeIdentifierNode($2);
-        ASTNode* varNode = makeBinOpNode(NODE_VAR_DECL, $1, nameNode);
-        $$ = makeBinOpNode(NODE_ASSIGN, varNode, $4); 
+        $$ = makeVarDeclNode($1, $2, $4);
       }
     | IncludeDecl { $$ = $1; }
 ;
 
 Type:
-      TYPE_INT { $$ = makeTypeNode(TYPE_INT); }    // Нужна функция makeTypeNode
+      TYPE_INT { $$ = makeTypeNode(TYPE_INT); }
     | TYPE_STRING { $$ = makeTypeNode(TYPE_STRING); }
     | TYPE_DOUBLE { $$ = makeTypeNode(TYPE_DOUBLE); }
     | TYPE_BOOL { $$ = makeTypeNode(TYPE_BOOL); }
     | TYPE_AUTO { $$ = makeTypeNode(TYPE_AUTO); }
-    | IDENTIFIER { $$ = makeIdentifierNode($1); }   // $1 содержит имя типа
+    | IDENTIFIER { $$ = makeIdentifierNode($1); }
 ;
 
 ObjectDecl:
-    OBJECT IDENTIFIER OptionalBase '{' ComponentInits '}' { $$ = makeVoidNode(NODE_OBJECT_DECL); }
+    OBJECT IDENTIFIER OptionalBase '{' ComponentInits '}' { 
+        $$ = makeObjectDeclNode($2, $3, $5);
+    }
 ;
 
 OptionalBase:
       /* empty */ { $$ = NULL; }
-    | ':' IDENTIFIER { $$ = makeVoidNode(NODE_IDENTIFIER); }
+    | ':' IDENTIFIER { $$ = makeIdentifierNode($2); }
 ;
 
 ComponentInits:
       /* empty */ { $$ = NULL; }
-    | ComponentInits ComponentInit { $$ = $2; }
+    | ComponentInits ComponentInit { 
+        if ($1 == NULL) {
+            $$ = makeListNode(NODE_INIT_LIST);
+            $$->left = $2;
+        } else {
+            $$ = appendToList($1, $2);
+        }
+      }
 ;
 
 ComponentInit:
-      IDENTIFIER IDENTIFIER '=' Expression ';' { $$ = makeBinOpNode(NODE_ASSIGN, makeVoidNode(NODE_IDENTIFIER), $4); }
-    | IDENTIFIER IDENTIFIER '[' ']' '=' ArrayInit ';' { $$ = makeBinOpNode(NODE_ASSIGN, makeVoidNode(NODE_IDENTIFIER), $6); }
-    | IDENTIFIER IDENTIFIER '=' ObjectInit ';' { $$ = makeBinOpNode(NODE_ASSIGN, makeVoidNode(NODE_IDENTIFIER), $4); }
+      IDENTIFIER IDENTIFIER '=' Expression ';' { 
+        ASTNode* type = makeIdentifierNode($1);
+        ASTNode* var = makeVarDeclNode(type, $2, $4);
+        $$ = makeVoidNode(NODE_COMPONENT_INIT);
+        $$->left = var;
+      }
+    | IDENTIFIER IDENTIFIER '[' ']' '=' ArrayInit ';' { 
+        ASTNode* type = makeIdentifierNode($1);
+        ASTNode* var = makeVarDeclNode(type, $2, $6);
+        $$ = makeVoidNode(NODE_COMPONENT_INIT);
+        $$->left = var;
+      }
+    | IDENTIFIER IDENTIFIER '=' ObjectInit ';' { 
+        ASTNode* type = makeIdentifierNode($1);
+        ASTNode* var = makeVarDeclNode(type, $2, $4);
+        $$ = makeVoidNode(NODE_COMPONENT_INIT);
+        $$->left = var;
+      }
     | IncludeDecl { $$ = $1; }
 ;
 
 ArrayInit:
-    '{' ExpressionListOpt '}' { $$ = $2; }
+    '{' ExpressionListOpt '}' { 
+        $$ = makeVoidNode(NODE_ARRAY_INIT);
+        $$->left = $2;
+    }
 ;
 
 ObjectInit:
-    '{' InitListOpt '}' { $$ = $2; }
+    '{' InitListOpt '}' { 
+        $$ = makeVoidNode(NODE_OBJECT_INIT);
+        $$->left = $2;
+    }
 ;
 
 InitListOpt:
@@ -165,12 +200,19 @@ InitListOpt:
 ;
 
 InitList:
-    InitElement { $$ = $1; }
-    | InitList ',' InitElement { $$ = $3; }
+    InitElement { 
+        $$ = makeListNode(NODE_INIT_LIST);
+        $$->left = $1;
+    }
+    | InitList ',' InitElement { 
+        $$ = appendToList($1, $3);
+    }
 ;
 
 InitElement:
-    IDENTIFIER ':' Expression { $$ = makeBinOpNode(NODE_ASSIGN, makeVoidNode(NODE_IDENTIFIER), $3); }
+    IDENTIFIER ':' Expression { 
+        $$ = makeBinOpNode(NODE_ASSIGN, makeIdentifierNode($1), $3);
+    }
     | Expression { $$ = $1; }
 ;
 
@@ -180,40 +222,70 @@ ExpressionListOpt:
 ;
 
 ExpressionList:
-      Expression { $$ = $1; }
-    | ExpressionList ',' Expression { $$ = $3; }
+      Expression { 
+        $$ = makeListNode(NODE_EXPRESSION_LIST);
+        $$->left = $1;
+      }
+    | ExpressionList ',' Expression { 
+        $$ = appendToList($1, $3);
+      }
 ;
 
 SystemDecl:
-    SYSTEM IDENTIFIER '{' QueryDecls RunDecls '}' { $$ = makeVoidNode(NODE_SYSTEM_DECL); }
+    SYSTEM IDENTIFIER '{' QueryDecls RunDecls '}' { 
+        $$ = makeSystemDeclNode($2, $4, $5);
+    }
 ;
 
 QueryDecls:
       /* empty */ { $$ = NULL; }
-    | QueryDecls QueryDecl { $$ = $2; }
+    | QueryDecls QueryDecl { 
+        if ($1 == NULL) {
+            $$ = makeListNode(NODE_EXPRESSION_LIST);
+            $$->left = $2;
+        } else {
+            $$ = appendToList($1, $2);
+        }
+      }
 ;
 
 QueryDecl:
-    QUERY OptAlias '(' IDENTIFIER ')' ';' { $$ = makeVoidNode(NODE_QUERY); }
+    QUERY OptAlias '(' IDENTIFIER ')' ';' { 
+        $$ = makeQueryDeclNode($2 ? $2->string_val : NULL, $4);
+    }
 ;
 
 OptAlias:
       /* empty */ { $$ = NULL; }
-    | IDENTIFIER { $$ = makeVoidNode(NODE_IDENTIFIER); }
+    | IDENTIFIER { $$ = makeIdentifierNode($1); }
 ;
 
 RunDecls:
       /* empty */ { $$ = NULL; }
-    | RunDecls RunDecl { $$ = $2; }
+    | RunDecls RunDecl { 
+        if ($1 == NULL) {
+            $$ = makeListNode(NODE_EXPRESSION_LIST);
+            $$->left = $2;
+        } else {
+            $$ = appendToList($1, $2);
+        }
+      }
 ;
 
 RunDecl:
-      RUN '(' ParamListOpt ')' ';' { $$ = makeVoidNode(NODE_RUN); }
-    | RUN '(' ParamListOpt ')' Block { $$ = makeVoidNode(NODE_RUN); }
+      RUN '(' ParamListOpt ')' ';' { 
+        $$ = makeRunDeclNode($3, NULL);
+      }
+    | RUN '(' ParamListOpt ')' Block { 
+        $$ = makeRunDeclNode($3, $5);
+      }
 ;
 
 Block:
-    '{' StatementsOpt '}' { $$ = $2; }
+    '{' StatementsOpt '}' { 
+        $$ = makeVoidNode(NODE_BLOCK);
+        $$->left = $2;
+    }
 ;
 
 StatementsOpt:
@@ -222,13 +294,12 @@ StatementsOpt:
 ;
 
 Statements:
-      Statement { $$ = $1; }
+      Statement { 
+        $$ = makeListNode(NODE_STATEMENT_LIST);
+        $$->left = $1;
+      }
     | Statements Statement { 
-        if ($1 == NULL) {
-            $$ = $2;
-        } else {
-            $$ = makeBinOpNode(NODE_STATEMENT_LIST, $1, $2);
-        }
+        $$ = appendToList($1, $2);
       }
 ;
 
@@ -248,19 +319,24 @@ ExpressionStatement:
 ;
 
 IfStatement:
-      IF '(' Expression ')' Statement { $$ = makeBinOpNode(NODE_IF, $3, $5); }
+      IF '(' Expression ')' Statement { 
+        $$ = makeIfNode($3, $5, NULL);
+      }
     | IF '(' Expression ')' Statement ELSE Statement { 
-        ASTNode* ifNode = makeBinOpNode(NODE_IF, $3, $5);
-        $$ = makeBinOpNode(NODE_ELSE, ifNode, $7); 
+        $$ = makeIfNode($3, $5, $7);
       }
 ;
 
 WhileStatement:
-    WHILE '(' Expression ')' Statement { $$ = makeBinOpNode(NODE_WHILE, $3, $5); }
+    WHILE '(' Expression ')' Statement { 
+        $$ = makeWhileNode($3, $5);
+    }
 ;
 
 ForStatement:
-    FOR '(' ForInitOpt ';' ExpressionOpt ';' ExpressionOpt ')' Statement { $$ = makeVoidNode(NODE_FOR); }
+    FOR '(' ForInitOpt ';' ExpressionOpt ';' ExpressionOpt ')' Statement { 
+        $$ = makeForNode($3, $5, $7, $9);
+    }
 ;
 
 ForInitOpt:
@@ -275,11 +351,16 @@ ExpressionOpt:
 ;
 
 ForEachStatement:
-    FOR '(' Type IDENTIFIER ':' Expression ')' Statement { $$ = makeVoidNode(NODE_FOR); }
+    FOR '(' Type IDENTIFIER ':' Expression ')' Statement { 
+        $$ = makeForEachNode($3, $4, $6, $8);
+    }
 ;
 
 ReturnStatement:
-    RETURN Expression ';' { $$ = makeBinOpNode(NODE_RETURN, $2, NULL); }
+    RETURN Expression ';' { 
+        $$ = makeVoidNode(NODE_RETURN);
+        $$->left = $2;
+    }
 ;
 
 ParamListOpt:
@@ -288,12 +369,21 @@ ParamListOpt:
 ;
 
 ParamList:
-      Param { $$ = $1; }
-    | ParamList ',' Param { $$ = $3; }
+      Param { 
+        $$ = makeListNode(NODE_PARAM_LIST);
+        $$->left = $1;
+      }
+    | ParamList ',' Param { 
+        $$ = appendToList($1, $3);
+      }
 ;
 
 Param:
-    Type IDENTIFIER { $$ = makeVoidNode(NODE_IDENTIFIER); }
+    Type IDENTIFIER { 
+        $$ = makeVoidNode(NODE_PARAM);
+        $$->left = $1;
+        $$->right = makeIdentifierNode($2);
+    }
 ;
 
 Expression:
@@ -301,8 +391,14 @@ Expression:
     | ObjectInit { $$ = $1; }
     | Accessor { $$ = $1; }
     | '(' Expression ')' { $$ = $2; }
-    | Expression BinOp Expression { $$ = makeBinOpNode($2->type, $1, $3); }
-    | Lvalue AssignOp Expression { $$ = makeBinOpNode($2->type, $1, $3); }
+    | Expression BinOp Expression { 
+        $$ = makeBinOpNode($2->type, $1, $3);
+        free($2); // освобождаем временный узел оператора
+      }
+    | Lvalue AssignOp Expression { 
+        $$ = makeBinOpNode($2->type, $1, $3);
+        free($2); // освобождаем временный узел оператора
+      }
 ;
 
 Lvalue:
@@ -336,12 +432,20 @@ BinOp:
 ;
 
 Accessor:
-      IDENTIFIER { $$ = makeVoidNode(NODE_IDENTIFIER); }
-    | Accessor '.' IDENTIFIER { $$ = makeVoidNode(NODE_IDENTIFIER); /* или создать NODE_MEMBER_ACCESS */ }
+      IDENTIFIER { $$ = makeIdentifierNode($1); }
+    | Accessor '.' IDENTIFIER { 
+        $$ = makeVoidNode(NODE_MEMBER_ACCESS);
+        $$->left = $1;
+        $$->right = makeIdentifierNode($3);
+      }
 ;
 
 IncludeDecl:
-    INCLUDE IDENTIFIER ExcludeListOpt ';' { $$ = makeVoidNode(NODE_INCLUDE); }
+    INCLUDE IDENTIFIER ExcludeListOpt ';' { 
+        $$ = makeVoidNode(NODE_INCLUDE);
+        $$->left = makeIdentifierNode($2);
+        $$->right = $3;
+    }
 ;
 
 ExcludeListOpt:
@@ -350,8 +454,13 @@ ExcludeListOpt:
 ;
 
 ExcludeList:
-      IDENTIFIER { $$ = makeVoidNode(NODE_IDENTIFIER); }
-    | ExcludeList ',' IDENTIFIER { $$ = makeVoidNode(NODE_IDENTIFIER); }
+      IDENTIFIER { 
+        $$ = makeListNode(NODE_EXPRESSION_LIST);
+        $$->left = makeIdentifierNode($1);
+      }
+    | ExcludeList ',' IDENTIFIER { 
+        $$ = appendToList($1, makeIdentifierNode($3));
+      }
 ;
 
 %%
@@ -360,4 +469,3 @@ void yyerror(const char* s) {
     fprintf(stderr, "Parse error at line %d, column %d: %s\n", line_num, col_num, s);
     if (yytext) fprintf(stderr, "Near '%s'\n", yytext);
 }
-

@@ -89,11 +89,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 18 "parser/matcha.y"
+#line 17 "parser/matcha.y"
 
     int int_val;
     double double_val;
-    u_int8_t bool_val;
+    uint8_t bool_val;
     char* str_val;
     char* id;
     ASTNode* node;
